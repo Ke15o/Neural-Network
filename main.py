@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from mnist_loader import load_data_wrapper
 
 class Network(object):
 
@@ -16,25 +17,25 @@ class Network(object):
         return a
     
     def SGD(self, training_data, epochs, mini_batch_size, eta, test_data=None):
-        """Train the neural network using mini-batch stochastic
-        gradient descent.  The "training_data" is a list of tuples
-        "(x, y)" representing the training inputs and the desired
-        outputs.  The other non-optional parameters are
-        self-explanatory.  If "test_data" is provided then the
-        network will be evaluated against the test data after each
-        epoch, and partial progress printed out.  This is useful for
-        tracking progress, but slows things down substantially."""
-        if test_data: n_test = len(test_data)
-        n  = len(training_data)
+        if test_data is not None:
+            n_test = len(test_data)
+        n = len(training_data)
+
         for j in range(epochs):
             random.shuffle(training_data)
-            mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, n, mini_batch_size)]
+            mini_batches = [
+                training_data[k:k+mini_batch_size]
+                for k in range(0, n, mini_batch_size)
+            ]
+
             for mini_batch in mini_batches:
                 self.update_mini_batch(mini_batch, eta)
-        if test_data:
-            print("Epock {0}: {1} / {2}".format(j, self.evaluate(test_data), n_test))
-        else:
-            print("Epoch {0} complete".format(j))
+
+            if test_data is not None:
+                print(f"Epoch {j}: {self.evaluate(test_data)} / {n_test}")
+            else:
+                print(f"Epoch {j} complete")
+
     
     def update_mini_batch(self, mini_batch, eta):
         """Update the network's weights and biases by applying
@@ -104,3 +105,7 @@ def sigmoid(z):
 def sigmoid_prime(z):
     """Derivative of the sigmoid function"""
     return sigmoid(z)*(1-sigmoid(z))
+
+training_data, validation_data, test_data = load_data_wrapper(data_dir=".")
+net = Network([784, 30, 10])
+net.SGD(training_data, epochs=10, mini_batch_size=10, eta=3.0, test_data=test_data)
